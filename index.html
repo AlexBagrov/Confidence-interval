@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Доверие к конверсии</title>
+  <style>
+    :root {
+      --bg: #f4f1ea;
+      --paper: #fffdf8;
+      --ink: #1c1914;
+      --muted: #5c574e;
+      --line: #d9d3c7;
+      --accent: #0f5c57;
+      --accent-soft: #d7eeeb;
+      --warn: #8a3b12;
+      --warn-soft: #f3e4d6;
+      --ok: #1b5e2a;
+      --ok-soft: #dcecdc;
+      --plan: #6b4ea0;
+      --expected: #9a5b1f;
+      --chart-fill: #d6d6d6;
+      --chart-fill-border: #ababab;
+      --fact-line: #111827;
+      --expected-line: #0f766e;
+      --plan-line: #7c3aed;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      line-height: 1.45;
+    }
+
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 32px 20px 64px;
+    }
+
+    h1 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.75rem;
+      font-weight: 500;
+      margin: 0 0 8px;
+      letter-spacing: -0.02em;
+    }
+
+    .lede {
+      color: var(--muted);
+      margin: 0 0 28px;
+      max-width: 42em;
+    }
+
+    .panel {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    label strong {
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    label .note {
+      font-size: 0.75rem;
+      font-weight: 400;
+      color: var(--muted);
+    }
+
+    input[type="number"] {
+      font: inherit;
+      font-size: 1.05rem;
+      color: var(--ink);
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      width: 100%;
+    }
+
+    input[type="number"]:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+
+    .levels {
+      display: flex;
+      gap: 6px;
+    }
+
+    .levels button {
+      flex: 1;
+      font: inherit;
+      padding: 8px 6px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+      color: var(--ink);
+    }
+
+    .levels button[aria-pressed="true"] {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .actions button[type="submit"] {
+      font: inherit;
+      font-weight: 600;
+      padding: 10px 18px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .actions button[type="submit"]:hover {
+      filter: brightness(1.08);
+    }
+
+    .form-error {
+      font-size: 0.85rem;
+      color: var(--warn);
+    }
+
+    .hint {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin: 12px 0 0;
+    }
+
+    .ci {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 12px;
+      font-family: Georgia, "Times New Roman", serif;
+      margin: 8px 0 4px;
+    }
+
+    .ci b {
+      font-size: 2.4rem;
+      font-weight: 500;
+    }
+
+    .ci span {
+      color: var(--muted);
+      font-size: 1.1rem;
+    }
+
+    .sub {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 16px;
+    }
+
+    .chart {
+      width: 100%;
+      padding: 8px 4px 0;
+    }
+
+    .chart-track {
+      position: relative;
+      height: 18px;
+      margin: 16px 8px 10px;
+      background: #d9d3c7;
+      border-radius: 9px;
+    }
+
+    .chart-bar {
+      position: absolute;
+      top: -5px;
+      height: 28px;
+      background: var(--chart-fill);
+      border-radius: 6px;
+      min-width: 2px;
+      border: 1px solid var(--chart-fill-border);
+    }
+
+    .chart-mark {
+      position: absolute;
+      top: -12px;
+      width: 3px;
+      height: 42px;
+      margin-left: -1.5px;
+      background: var(--fact-line);
+    }
+
+    .chart-mark.expected {
+      width: 0;
+      background: transparent;
+      border-left: 3px dotted var(--expected-line);
+    }
+
+    .chart-mark.plan {
+      width: 0;
+      background: transparent;
+      border-left: 3px dashed var(--plan-line);
+    }
+
+    .chart-ticks {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--muted);
+      padding: 0 2px;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px 20px;
+      justify-content: center;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin: 8px 0 0;
+    }
+
+    .legend i {
+      display: inline-block;
+      width: 14px;
+      height: 8px;
+      border-radius: 2px;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    .legend i.swatch-fill {
+      background: var(--chart-fill);
+      border: 1px solid var(--chart-fill-border);
+    }
+
+    .legend i.swatch-line {
+      width: 16px;
+      height: 3px;
+      border-radius: 0;
+    }
+
+    .legend i.swatch-fact { background: var(--fact-line); }
+    .legend i.swatch-exp { background: var(--expected-line); }
+    .legend i.swatch-plan { background: var(--plan-line); }
+
+    .readout {
+      margin: 18px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .readout li {
+      padding: 10px 12px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+
+    .readout li:last-child { margin-bottom: 0; }
+
+    .tone-neutral { background: #f3f0e8; }
+    .tone-warn { background: var(--warn-soft); color: var(--warn); }
+    .tone-ok { background: var(--ok-soft); color: var(--ok); }
+
+    .error {
+      color: var(--warn);
+      font-size: 0.9rem;
+    }
+
+    footer {
+      margin-top: 18px;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    footer p { margin: 0 0 6px; }
+
+    footer details {
+      margin-top: 2px;
+    }
+
+    footer details summary {
+      cursor: pointer;
+      color: var(--ink);
+    }
+
+    footer ol {
+      margin: 8px 0 0;
+      padding-left: 1.2em;
+    }
+
+    footer ol li { margin-bottom: 4px; }
+
+    .ref-title {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.05rem;
+      font-weight: 500;
+      margin: 0 0 4px;
+    }
+
+    .ref-kicker {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin: 0 0 12px;
+    }
+
+    .ref-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    .ref-table th,
+    .ref-table td {
+      padding: 8px 6px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+    }
+
+    .ref-table th {
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .ref-table tr:last-child td { border-bottom: 0; }
+
+    .ref-ok { color: var(--ok); }
+    .ref-warn { color: var(--warn); }
+
+    .lede-actions {
+      margin: 0 0 18px;
+    }
+
+    .btn-ghost {
+      font: inherit;
+      font-size: 0.9rem;
+      padding: 8px 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      color: var(--ink);
+      cursor: pointer;
+    }
+
+    .btn-ghost:hover {
+      border-color: #b8b0a2;
+      background: #fff;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal[hidden] { display: none; }
+
+    .modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(28, 25, 20, 0.45);
+    }
+
+    .modal-dialog {
+      position: relative;
+      z-index: 1;
+      width: min(560px, 100%);
+      max-height: min(86vh, 720px);
+      overflow: auto;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: 0 16px 48px rgba(28, 25, 20, 0.18);
+      padding: 20px 22px 22px;
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .modal-head h2 {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.25rem;
+      font-weight: 500;
+    }
+
+    .modal-close {
+      flex: 0 0 auto;
+      width: 36px;
+      height: 36px;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 1.4rem;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .modal-close:hover {
+      background: #f0ebe3;
+      color: var(--ink);
+    }
+
+    .modal-body p {
+      margin: 0 0 12px;
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+
+    .modal-body h3 {
+      margin: 16px 0 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .guide-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    .guide-table th,
+    .guide-table td {
+      padding: 8px 6px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .guide-table th {
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .guide-table tr:last-child td { border-bottom: 0; }
+
+    .guide-note {
+      margin-top: 14px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    @media (max-width: 640px) {
+      .grid, .grid-2 { grid-template-columns: 1fr; }
+      .ci b { font-size: 1.8rem; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Доверие к конверсии</h1>
+    <p class="lede">
+      По заявкам и&nbsp;факту строим интервал: какие долгосрочные уровни конверсии ещё совместимы с&nbsp;этими данными, если заявки однотипны и&nbsp;уровень за период не менялся.
+      Ожидаемая&nbsp;— среднее по направлению (типичный уровень, не норма «попасть ровно»). Плановая&nbsp;— минимум компании: доля не ниже этого порога, а не попадание в&nbsp;него как в&nbsp;мишень.
+    </p>
+    <p class="lede-actions">
+      <button type="button" class="btn-ghost" id="guide_open">Когда данных хватает</button>
+    </p>
+
+    <form class="panel" id="form" autocomplete="off">
+      <div class="grid">
+        <label>
+          <strong>Заявки, шт.</strong>
+          <input id="n" type="number" min="1" step="1" inputmode="numeric" placeholder="35" />
+        </label>
+        <label>
+          <strong>Факт, %</strong>
+          <span class="note">конверсия менеджера в&nbsp;этой выборке</span>
+          <input id="p_obs" type="number" min="0" max="100" step="0.1" inputmode="decimal" placeholder="0" />
+        </label>
+        <label>
+          <strong>Ожидаемая, %</strong>
+          <span class="note">средний уровень менеджеров по направлению / продукту</span>
+          <input id="p_exp" type="number" min="0" max="100" step="0.1" inputmode="decimal" placeholder="12" />
+        </label>
+        <label>
+          <strong>Плановая, %</strong>
+          <span class="note">минимум по продукту: доля не ниже этого порога</span>
+          <input id="p_plan" type="number" min="0" max="100" step="0.1" inputmode="decimal" placeholder="20" />
+        </label>
+      </div>
+      <div class="grid-2">
+        <label>
+          <strong>Покрытие интервала</strong>
+          <span class="note">свойство метода (не «вероятность 95% для этого менеджера»)</span>
+          <div class="levels" role="group" aria-label="Покрытие интервала">
+            <button type="button" data-level="0.90">90%</button>
+            <button type="button" data-level="0.95" aria-pressed="true">95%</button>
+            <button type="button" data-level="0.99">99%</button>
+          </div>
+        </label>
+        <label>
+          <strong>Справочник: точность ±, п.&nbsp;п.</strong>
+          <span class="note">размах, при котором оценку уже считают относительно узкой</span>
+          <input id="precision" type="number" min="1" max="40" step="0.5" value="5" />
+        </label>
+      </div>
+      <p class="hint">
+        Плановая подтверждена, когда вся полоса уже выше минимума; не выполняется, когда даже верх ниже.
+      </p>
+      <div class="actions">
+        <button type="submit">Рассчитать</button>
+        <span class="form-error" id="form_error" hidden></span>
+      </div>
+    </form>
+
+    <section class="panel" id="out" hidden>
+      <div class="ci">
+        <b id="ci_lo"></b>
+        <span>—</span>
+        <b id="ci_hi"></b>
+      </div>
+      <p class="sub" id="ci_sub"></p>
+      <div class="chart" id="chart" hidden>
+        <div class="chart-track">
+          <div class="chart-bar" id="chart_bar"></div>
+          <div class="chart-mark expected" id="chart_exp" hidden></div>
+          <div class="chart-mark plan" id="chart_plan" hidden></div>
+          <div class="chart-mark" id="chart_fact"></div>
+        </div>
+        <div class="chart-ticks"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
+      </div>
+      <div class="legend">
+        <span><i class="swatch-fill"></i>Совместимые уровни</span>
+        <span><i class="swatch-line swatch-fact"></i>Факт</span>
+        <span><i class="swatch-line swatch-exp"></i>Ожидаемая</span>
+        <span><i class="swatch-line swatch-plan"></i>Плановая</span>
+      </div>
+      <ul class="readout" id="readout"></ul>
+    </section>
+
+    <section class="panel" id="reftable" hidden>
+      <h2 class="ref-title">Справочник точности</h2>
+      <p class="ref-kicker" id="ref_kicker"></p>
+      <table class="ref-table">
+        <thead>
+          <tr>
+            <th>Если уровень</th>
+            <th>Нужно заявок</th>
+            <th>У вас</th>
+          </tr>
+        </thead>
+        <tbody id="ref_body"></tbody>
+      </table>
+    </section>
+
+    <footer>
+      <p>Интервал Уилсона строится по заявкам и&nbsp;факту.</p>
+      <p>Ожидаемая совместима с&nbsp;фактом, если лежит внутри интервала. «Аномалия» ставится, только когда ожидаемая вне полосы; хвост бинома лишь показывает, как редко такое бывает.</p>
+      <p>Плановая&nbsp;— минимум «не ниже»: смотрим, остались ли совместимые уровни ниже минимума, все они уже выше или все уже ниже.</p>
+      <details>
+        <summary>Подробнее</summary>
+        <ol>
+          <li>Считаем долю, не среднее. «Школьная» формула на 10–50 заявках заужает диапазон.</li>
+          <li>Уилсон не вылезает за 0–100% и&nbsp;не схлопывается при нуле продаж.</li>
+          <li>При нуле или 100% продаж не читайте «±»: важна верхняя или нижняя граница, какие уровни ещё не отсечены.</li>
+          <li>Ожидаемая&nbsp;— двусторонняя совместимость с&nbsp;типичным уровнем.</li>
+          <li>Плановая&nbsp;— порог «не ниже». Зелёный, когда нижняя граница уже выше минимума, а не когда факт «попал в&nbsp;12%». Подтверждение минимума по низу двустороннего интервала намеренно строже одностороннего 5%.</li>
+          <li>Ожидаемую (среднее направления) считаем заданной. Если она сама с&nbsp;малой выборки&nbsp;— не используйте «аномалию» как вердикт.</li>
+          <li>Снимок на фиксированном n, не правило остановки: не пересчитывайте каждую неделю до первой «аномалии».</li>
+          <li>Не для массового скрининга всех менеджеров с&nbsp;одним порогом: в&nbsp;команде из 20 человек «аномалия» в&nbsp;среднем появится и&nbsp;при норме.</li>
+        </ol>
+      </details>
+    </footer>
+  </main>
+
+  <div class="modal" id="guide_modal" hidden role="dialog" aria-modal="true" aria-labelledby="guide_title">
+    <div class="modal-backdrop" id="guide_backdrop" tabindex="-1"></div>
+    <div class="modal-dialog">
+      <div class="modal-head">
+        <h2 id="guide_title">Когда данных хватает</h2>
+        <button type="button" class="modal-close" id="guide_close" aria-label="Закрыть">×</button>
+      </div>
+      <div class="modal-body">
+        <p>
+          Ориентир про <strong>ширину оценки</strong> (±5&nbsp;п.&nbsp;п., покрытие 95%): когда оценку уже считают относительно узкой.
+          Это не ответ «менеджер хороший / плохой» и&nbsp;не замена расчёту с&nbsp;ожидаемой и&nbsp;плановой.
+        </p>
+
+        <h3>По числу заявок (грубо)</h3>
+        <table class="guide-table">
+          <thead>
+            <tr>
+              <th>Заявок</th>
+              <th>Что обычно можно сказать</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>до 10</td>
+              <td>Оценке как узкой доверять рано. Смотрите только совместимый диапазон; при нуле продаж&nbsp;— верхнюю границу.</td>
+            </tr>
+            <tr>
+              <td>11–40</td>
+              <td>Чаще всего ещё рано для узкой цифры при типичных 5–20%. Уже видно, ожидаемая и&nbsp;плановая внутри полосы или снаружи.</td>
+            </tr>
+            <tr>
+              <td>41–100</td>
+              <td>При низкой конверсии (~5–10%) иногда уже близко к&nbsp;±5&nbsp;п.&nbsp;п.; при 15–30% обычно всё ещё широко.</td>
+            </tr>
+            <tr>
+              <td>100+</td>
+              <td>Чаще хватает для ±5&nbsp;п.&nbsp;п. при низких/средних уровнях. Для ~50% нужно ещё больше заявок.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Сколько заявок для ±5&nbsp;п.&nbsp;п. (95%)</h3>
+        <p>Числа по методу Уилсона те же, что в&nbsp;калькуляторе, и&nbsp;зависят от уровня конверсии.</p>
+        <table class="guide-table">
+          <thead>
+            <tr>
+              <th>Если уровень около</th>
+              <th>Нужно заявок</th>
+              <th>Если меньше</th>
+            </tr>
+          </thead>
+          <tbody id="guide_precision_body"></tbody>
+        </table>
+
+        <p class="guide-note">
+          Подтвердить минимум плановой или отсечь ожидаемую&nbsp;— другие пороги по числу заявок.
+          Для введённых факта, ожидаемой и&nbsp;плановой используйте расчёт на странице.
+          При 0% или 100% полуширина Уилсона&nbsp;— не «± точность»; смотрите край интервала.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const Z = { 0.90: 1.6448536269514722, 0.95: 1.959963984540054, 0.99: 2.5758293035489004 };
+
+    const el = (id) => document.getElementById(id);
+    const nInput = el("n");
+    const pObsInput = el("p_obs");
+    const pExpInput = el("p_exp");
+    const pPlanInput = el("p_plan");
+    const precisionInput = el("precision");
+    const out = el("out");
+    const reftable = el("reftable");
+    const formError = el("form_error");
+
+    let level = 0.95;
+
+    document.querySelectorAll(".levels button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".levels button").forEach((b) => b.setAttribute("aria-pressed", "false"));
+        btn.setAttribute("aria-pressed", "true");
+        level = Number(btn.dataset.level);
+      });
+    });
+
+    el("form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      render();
+    });
+
+    const guideModal = el("guide_modal");
+    const guideOpen = el("guide_open");
+    const guideClose = el("guide_close");
+    const guideBackdrop = el("guide_backdrop");
+    let guideFilled = false;
+
+    function fillGuidePrecision() {
+      if (guideFilled) return;
+      const z = Z[0.95];
+      const e = 0.05;
+      const rates = [0.05, 0.1, 0.15, 0.2, 0.3, 0.5];
+      el("guide_precision_body").innerHTML = rates.map((p) => {
+        const need = nForPrecision(p, e, z);
+        const pct = fmtPct(p, p * 100 % 1 ? 1 : 0);
+        return `<tr>
+          <td>${pct}%</td>
+          <td>${need}</td>
+          <td>оценке как узкой (±5&nbsp;п.&nbsp;п.) доверять рано</td>
+        </tr>`;
+      }).join("");
+      guideFilled = true;
+    }
+
+    function openGuide() {
+      fillGuidePrecision();
+      guideModal.hidden = false;
+      document.body.style.overflow = "hidden";
+      guideClose.focus();
+    }
+
+    function closeGuide() {
+      guideModal.hidden = true;
+      document.body.style.overflow = "";
+      guideOpen.focus();
+    }
+
+    guideOpen.addEventListener("click", openGuide);
+    guideClose.addEventListener("click", closeGuide);
+    guideBackdrop.addEventListener("click", closeGuide);
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !guideModal.hidden) closeGuide();
+    });
+
+    function parseNum(node) {
+      const raw = String(node.value).trim().replace(/\s/g, "").replace(",", ".");
+      if (raw === "") return null;
+      const v = Number(raw);
+      return Number.isFinite(v) ? v : null;
+    }
+
+    function parseCount(node) {
+      const v = parseNum(node);
+      if (v === null || v < 1) return null;
+      return Math.round(v);
+    }
+
+    function wilson(p, n, z) {
+      const z2 = z * z;
+      const denom = 1 + z2 / n;
+      const center = (p + z2 / (2 * n)) / denom;
+      const inner = (p * (1 - p) + z2 / (4 * n)) / n;
+      const margin = z * Math.sqrt(Math.max(inner, 0)) / denom;
+      return {
+        lo: Math.max(0, center - margin),
+        hi: Math.min(1, center + margin),
+      };
+    }
+
+    function nForPrecision(p, e, z, maxN = 200000) {
+      if (e <= 0) return null;
+      const wideEnough = (n) => {
+        const ci = wilson(p, n, z);
+        return (ci.hi - ci.lo) / 2 <= e + 1e-12;
+      };
+      let lo = 1;
+      let hi = 32;
+      while (hi < maxN && !wideEnough(hi)) hi *= 2;
+      if (!wideEnough(Math.min(hi, maxN))) return maxN;
+      while (lo < hi) {
+        const mid = Math.floor((lo + hi) / 2);
+        if (wideEnough(mid)) hi = mid;
+        else lo = mid + 1;
+      }
+      return lo;
+    }
+
+    function fmtPct(x, digits = 1) {
+      const v = x * 100;
+      const rounded = Number(v.toFixed(digits));
+      return String(rounded).replace(".", ",");
+    }
+
+    function ruN(n, one, few, many) {
+      const abs = Math.abs(n) % 100;
+      const d = abs % 10;
+      if (abs > 10 && abs < 20) return many;
+      if (d === 1) return one;
+      if (d >= 2 && d <= 4) return few;
+      return many;
+    }
+
+    function logChoose(n, k) {
+      if (k < 0 || k > n) return -Infinity;
+      const m = Math.min(k, n - k);
+      let s = 0;
+      for (let i = 1; i <= m; i++) s += Math.log(n - m + i) - Math.log(i);
+      return s;
+    }
+
+    function binomLogPm(n, k, p) {
+      if (k < 0 || k > n) return -Infinity;
+      if (p <= 0) return k === 0 ? 0 : -Infinity;
+      if (p >= 1) return k === n ? 0 : -Infinity;
+      return logChoose(n, k) + k * Math.log(p) + (n - k) * Math.log(1 - p);
+    }
+
+    function logSumExp(logs) {
+      let max = -Infinity;
+      for (const x of logs) if (x > max) max = x;
+      if (max === -Infinity) return -Infinity;
+      let s = 0;
+      for (const x of logs) s += Math.exp(x - max);
+      return max + Math.log(s);
+    }
+
+    function binomTail(n, k, p, side) {
+      const logs = [];
+      if (side === "le") {
+        for (let i = 0; i <= k; i++) logs.push(binomLogPm(n, i, p));
+      } else {
+        for (let i = k; i <= n; i++) logs.push(binomLogPm(n, i, p));
+      }
+      return Math.min(1, Math.max(0, Math.exp(logSumExp(logs))));
+    }
+
+    function fmtProb(pr) {
+      if (pr <= 0) return "0%";
+      if (pr < 0.001) return "меньше 0,1%";
+      if (pr >= 0.999) return "почти 100%";
+      if (pr < 0.01) return fmtPct(pr, 2) + "%";
+      return fmtPct(pr, 1) + "%";
+    }
+
+    function surpriseVsRate(n, k, pRef) {
+      const pHat = k / n;
+      let prob;
+      let how;
+      let side;
+      if (pHat < pRef - 1e-12) {
+        prob = binomTail(n, k, pRef, "le");
+        side = "down";
+        how = k === 0 ? `0 продаж из ${n}` : `${k} ${ruN(k, "продажу", "продажи", "продаж")} из ${n} или меньше`;
+      } else if (pHat > pRef + 1e-12) {
+        prob = binomTail(n, k, pRef, "ge");
+        side = "up";
+        how = `${k} ${ruN(k, "продажу", "продажи", "продаж")} из ${n} или больше`;
+      } else {
+        prob = Math.exp(binomLogPm(n, k, pRef));
+        side = "exact";
+        how = `${k} ${ruN(k, "продажу", "продажи", "продаж")} из ${n}`;
+      }
+      const per100 = Math.round(prob * 100);
+      const per100txt = per100 < 1
+        ? "реже 1 раза из 100"
+        : `примерно ${per100} ${ruN(per100, "раз", "раза", "раз")} из 100`;
+      return { how, probTxt: fmtProb(prob), per100txt, prob, side };
+    }
+
+    function nToClearFloor(pHat, pFloor, z, maxN = 200000) {
+      if (!(pFloor > 0) || pHat <= pFloor + 1e-15) return null;
+      const ok = (n) => wilson(pHat, n, z).lo >= pFloor - 1e-15;
+      let lo = 1;
+      let hi = 32;
+      while (hi < maxN && !ok(hi)) hi *= 2;
+      if (!ok(Math.min(hi, maxN))) return null;
+      while (lo < hi) {
+        const mid = Math.floor((lo + hi) / 2);
+        if (ok(mid)) hi = mid;
+        else lo = mid + 1;
+      }
+      return lo;
+    }
+
+    function nZerosToRuleOut(pRef, z, maxN = 200000) {
+      if (!(pRef > 0)) return null;
+      const ruledOut = (n) => wilson(0, n, z).hi < pRef - 1e-15;
+      let lo = 1;
+      let hi = 32;
+      while (hi < maxN && !ruledOut(hi)) hi *= 2;
+      if (!ruledOut(Math.min(hi, maxN))) return null;
+      while (lo < hi) {
+        const mid = Math.floor((lo + hi) / 2);
+        if (ruledOut(mid)) hi = mid;
+        else lo = mid + 1;
+      }
+      return lo;
+    }
+
+    function zerosGap(n, pRef, z) {
+      const need = nZerosToRuleOut(pRef, z);
+      if (need === null) return null;
+      return { need, gap: Math.max(0, need - n) };
+    }
+
+    function pct(p) {
+      return Math.min(100, Math.max(0, p * 100));
+    }
+
+    function renderChart(ciLo, ciHi, pObs, pExp, pPlan) {
+      const chart = el("chart");
+      const bar = el("chart_bar");
+      const fact = el("chart_fact");
+      const expMark = el("chart_exp");
+      const plan = el("chart_plan");
+      const left = pct(ciLo);
+      const right = pct(ciHi);
+      bar.style.left = left + "%";
+      bar.style.width = Math.max(right - left, 0.3) + "%";
+      fact.style.left = pct(pObs) + "%";
+      let expPos = pExp !== null ? pct(pExp) : null;
+      let planPos = pPlan !== null ? pct(pPlan) : null;
+      if (expPos !== null && planPos !== null && Math.abs(expPos - planPos) < 1.2) {
+        expPos -= 0.8;
+        planPos += 0.8;
+      }
+      if (expPos !== null) {
+        expMark.hidden = false;
+        expMark.style.left = expPos + "%";
+      } else {
+        expMark.hidden = true;
+      }
+      if (planPos !== null) {
+        plan.hidden = false;
+        plan.style.left = planPos + "%";
+      } else {
+        plan.hidden = true;
+      }
+      chart.hidden = false;
+    }
+
+    function render() {
+      const n = parseCount(nInput);
+      const pObsPct = parseNum(pObsInput);
+      const pExpPct = parseNum(pExpInput);
+      const pPlanPct = parseNum(pPlanInput);
+      const z = Z[level];
+
+      const pOk = pObsPct !== null && pObsPct >= 0 && pObsPct <= 100;
+      const pEntered = pOk ? pObsPct / 100 : null;
+      const pExp = pExpPct !== null && pExpPct >= 0 && pExpPct <= 100 ? pExpPct / 100 : null;
+      const pPlan = pPlanPct !== null && pPlanPct >= 0 && pPlanPct <= 100 ? pPlanPct / 100 : null;
+      const canEval = n !== null && pOk;
+
+      if (!canEval) {
+        out.hidden = true;
+        reftable.hidden = true;
+        formError.hidden = false;
+        formError.textContent = "Введите заявки и факт конверсии.";
+        return;
+      }
+
+      formError.hidden = true;
+
+      const k = Math.round(n * pEntered);
+      const pHat = k / n;
+      const ci = wilson(pHat, n, z);
+      const factTxt = fmtPct(pHat, (pHat * 100) % 1 ? 1 : 0);
+      const enteredTxt = fmtPct(pEntered, pObsPct % 1 ? 1 : 0);
+      const expTxt = pExp !== null ? fmtPct(pExp, pExpPct % 1 ? 1 : 0) : "";
+      const planTxt = pPlan !== null ? fmtPct(pPlan, pPlanPct % 1 ? 1 : 0) : "";
+      const loTxt = fmtPct(ci.lo);
+      const hiTxt = fmtPct(ci.hi);
+      const rangeTxt = `${loTxt}%–${hiTxt}%`;
+      const precPp = parseNum(precisionInput);
+      const precOk = precPp !== null && precPp > 0;
+      const e = precOk ? precPp / 100 : null;
+      const precTxt = precOk ? fmtPct(e, precPp % 1 ? 1 : 0) : "";
+
+      el("ci_lo").textContent = fmtPct(ci.lo) + "%";
+      el("ci_hi").textContent = fmtPct(ci.hi) + "%";
+
+      const salesWord = ruN(k, "продажа", "продажи", "продаж");
+      const nWord = ruN(n, "заявки", "заявок", "заявок");
+      let sub = `Считаем как ${k} ${salesWord} из ${n} ${nWord} (${factTxt}%).`;
+      if (Math.abs(pHat - pEntered) > 1e-9) {
+        sub += ` Введённые ${enteredTxt}% на этом n не бывают\u00A0— округлили до целого числа продаж.`;
+      }
+      el("ci_sub").textContent = sub;
+
+      renderChart(ci.lo, ci.hi, pHat, pExp, pPlan);
+
+      const items = [];
+
+      const widthPp = (ci.hi - ci.lo) * 100;
+      const halfPp = widthPp / 2;
+      const halfTxt = fmtPct(halfPp / 100, halfPp >= 10 ? 0 : 1);
+      const preciseEnough = precOk && halfPp <= precPp + 1e-9;
+
+      if (k === 0) {
+        let text = `Верхняя граница ${hiTxt}%. Выше\u00A0— не согласуется с нулём продаж.`;
+        text += precOk
+          ? ` Оценку 0% не читайте как «узкую до ±${precTxt} п.\u00A0п.»: у нуля важна верхняя граница, не полуширина.`
+          : ` Оценку 0% не читайте как узкую цифру: у нуля важна верхняя граница, не полуширина.`;
+        items.push({ tone: "neutral", text });
+      } else if (k === n) {
+        let text = `Нижняя граница ${loTxt}%. Ниже\u00A0— не согласуется со всеми продажами.`;
+        text += precOk
+          ? ` Оценку 100% не читайте как «узкую до ±${precTxt} п.\u00A0п.»: у края важна нижняя граница, не полуширина.`
+          : ` Оценку 100% не читайте как узкую цифру: у края важна нижняя граница, не полуширина.`;
+        items.push({ tone: "neutral", text });
+      } else if (!precOk) {
+        items.push({
+          tone: "neutral",
+          text: `Интервал ${rangeTxt}, ±${halfTxt} п.\u00A0п.`,
+        });
+      } else if (preciseEnough) {
+        items.push({
+          tone: "neutral",
+          text: `Интервал ${rangeTxt}, ±${halfTxt} п.\u00A0п.\u00A0— оценка уже относительно узкая (порог ±${precTxt} п.\u00A0п.). На «хороший / плохой» это само по себе не отвечает.`,
+        });
+      } else {
+        items.push({
+          tone: "neutral",
+          text: `Интервал ${rangeTxt}, ±${halfTxt} п.\u00A0п. На цифру ${factTxt}% как на узкую пока опираться рано (порог ±${precTxt} п.\u00A0п.).`,
+        });
+      }
+
+      function pushExpected(pRef, refTxt) {
+        const zg = k === 0 && pRef > 0 ? zerosGap(n, pRef, z) : null;
+        const s = surpriseVsRate(n, k, pRef);
+        const chance = `При среднем ${refTxt}% получить ${s.how}: ${s.probTxt} (${s.per100txt}).`;
+        const outside = pRef < ci.lo - 1e-15 || pRef > ci.hi + 1e-15;
+        const isAnomaly = s.side !== "exact" && outside;
+
+        if (isAnomaly && s.side === "up") {
+          items.push({
+            tone: "ok",
+            text: `Аномалия вверх относительно ожидаемой ${refTxt}%. Ожидаемая вне интервала\u00A0— типичный уровень с фактом плохо совместим. ${chance}`,
+          });
+          return;
+        }
+        if (isAnomaly && s.side === "down") {
+          let text = `Аномалия вниз относительно ожидаемой ${refTxt}%. Ожидаемая вне интервала\u00A0— типичный уровень с фактом плохо совместим. ${chance}`;
+          if (k === 0) text += ` Нуля продаж на ${n} заявках уже хватило.`;
+          items.push({ tone: "warn", text });
+          return;
+        }
+
+        let text = `Ожидаемая ${refTxt}% ещё может объяснять факт. ${chance}`;
+        if (zg && zg.gap > 0) {
+          text += ` Чтобы отсечь ожидаемую при нуле продаж, нужно ещё ${zg.gap} ${ruN(zg.gap, "заявку", "заявки", "заявок")} без продаж\u00A0— всего ${zg.need}.`;
+        }
+        items.push({ tone: "neutral", text });
+      }
+
+      function pushPlan(pRef, refTxt) {
+        const zg = k === 0 && pRef > 0 ? zerosGap(n, pRef, z) : null;
+
+        if (pRef < ci.lo) {
+          items.push({
+            tone: "ok",
+            text: `Плановая ${refTxt}% этими данными подтверждена: уровни ниже ${refTxt}% плохо совместимы с фактом (сейчас ${rangeTxt}).`,
+          });
+          return;
+        }
+        if (pRef > ci.hi) {
+          let text = `Плановая ${refTxt}% этими данными не подтверждается: даже верх диапазона (${hiTxt}%) ниже минимума.`;
+          if (k === 0) text += ` Нуля продаж на ${n} заявках для этого уже достаточно.`;
+          items.push({ tone: "warn", text });
+          return;
+        }
+
+        let text = `Пока рано решать по плановой ${refTxt}%: данные допускают и результат ниже минимума (${rangeTxt}).`;
+        const need = nToClearFloor(pHat, pRef, z);
+        if (need !== null) {
+          const gap = Math.max(0, need - n);
+          if (gap > 0) {
+            text += ` Если конверсия около ${factTxt}% удержится, чтобы подтвердить минимум, нужно примерно ${need} заявок (ещё ${gap}).`;
+          }
+        }
+        if (zg && zg.gap > 0) {
+          text += ` Чтобы при нуле продаж отсечь плановую ${refTxt}%, нужно ещё ${zg.gap} ${ruN(zg.gap, "заявку", "заявки", "заявок")} без продаж (всего ${zg.need}).`;
+        }
+        items.push({ tone: "neutral", text });
+      }
+
+      if (pExp !== null) pushExpected(pExp, expTxt);
+      if (pPlan !== null) pushPlan(pPlan, planTxt);
+
+      renderRefTable(n, z, e, pExp, pPlan, pHat, expTxt, planTxt, factTxt, precOk, precPp);
+
+      el("readout").innerHTML = items
+        .map((it) => `<li class="tone-${it.tone}">${it.text}</li>`)
+        .join("");
+      out.hidden = false;
+    }
+
+    function renderRefTable(n, z, e, pExp, pPlan, pHat, expTxt, planTxt, factTxt, precOk, precPp) {
+      if (!precOk) {
+        reftable.hidden = true;
+        return;
+      }
+
+      const coverTxt = String(Math.round(level * 100));
+      const precTxt = fmtPct(e, precPp % 1 ? 1 : 0);
+      const atEdge = pHat <= 1e-15 || pHat >= 1 - 1e-15;
+      let kicker =
+        `Сколько заявок нужно, чтобы интервал был уже ±${precTxt} п.\u00A0п. (покрытие ${coverTxt}%). Это про ширину оценки, не про «хороший» или «плохой» результат.`;
+      if (atEdge) {
+        kicker += " При нуле или 100% продаж строка «факт» не строится: полуширина там не означает «± точность».";
+      }
+      el("ref_kicker").textContent = kicker;
+
+      const rows = [];
+      const seen = new Set();
+      const add = (label, p, txt) => {
+        if (p <= 1e-15 || p >= 1 - 1e-15) return;
+        const key = txt;
+        if (seen.has(key)) return;
+        seen.add(key);
+        rows.push({ label, p, txt });
+      };
+      if (pExp !== null) add("Ожидаемая", pExp, expTxt);
+      if (pPlan !== null) add("Плановая", pPlan, planTxt);
+      add("Факт", pHat, factTxt);
+
+      if (rows.length === 0) {
+        el("ref_body").innerHTML = `<tr><td colspan="3">Для нуля или 100% продаж таблица ± не применяется\u00A0— смотрите край интервала выше.</td></tr>`;
+        reftable.hidden = false;
+        return;
+      }
+
+      el("ref_body").innerHTML = rows.map((row) => {
+        const need = nForPrecision(row.p, e, z);
+        const gap = Math.max(0, need - n);
+        const ok = gap === 0;
+        const status = ok
+          ? `<span class="ref-ok">${n}\u00A0— хватает</span>`
+          : `<span class="ref-warn">${n}\u00A0— мало, ещё ${gap}</span>`;
+        return `<tr>
+          <td>${row.label} ${row.txt}%</td>
+          <td>${need}</td>
+          <td>${status}</td>
+        </tr>`;
+      }).join("");
+      reftable.hidden = false;
+    }
+  </script>
+</body>
+</html>
