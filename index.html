@@ -394,29 +394,16 @@
 
     .ref-kicker {
       font-size: 0.78rem;
+      line-height: 1.4;
       color: var(--muted);
-      margin: 0 0 12px;
+      margin: 0 0 10px;
     }
 
-    .ref-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.85rem;
+    .ref-answer {
+      margin: 0;
+      font-size: 0.95rem;
+      line-height: 1.45;
     }
-
-    .ref-table th,
-    .ref-table td {
-      padding: 8px 6px;
-      border-bottom: 1px solid var(--line);
-      text-align: left;
-    }
-
-    .ref-table th {
-      color: var(--muted);
-      font-weight: 600;
-    }
-
-    .ref-table tr:last-child td { border-bottom: 0; }
 
     .ref-ok { color: var(--ok); }
     .ref-warn { color: var(--warn); }
@@ -607,7 +594,7 @@
         </label>
       </div>
       <p class="hint">
-        Справляется ли менеджер и&nbsp;оставлять ли лидген&nbsp;— смотрите блоки ожидаемой и&nbsp;плановой C2 после расчёта, не ширину интервала. Плановая C2 подтверждена, когда вся полоса уже выше минимума; не выполняется, когда даже верх ниже.
+        После расчёта смотрите блок ожидаемой C2 (справляется ли менеджер) и&nbsp;блок плановой C2 (оставлять ли лидген). Ширина интервала говорит только, насколько цифра факта уже узкая. Плановая C2 подтверждена, когда вся полоса уже выше минимума, и&nbsp;не выполняется, когда даже верх ниже.
       </p>
       <div class="actions">
         <button type="submit">Рассчитать</button>
@@ -641,18 +628,9 @@
     </section>
 
     <section class="panel" id="reftable" hidden>
-      <h2 class="ref-title">Справочник точности</h2>
+      <h2 class="ref-title">Когда оценка факта станет узкой</h2>
       <p class="ref-kicker" id="ref_kicker"></p>
-      <table class="ref-table">
-        <thead>
-          <tr>
-            <th>Если уровень</th>
-            <th>Нужно заявок</th>
-            <th>У вас</th>
-          </tr>
-        </thead>
-        <tbody id="ref_body"></tbody>
-      </table>
+      <p class="ref-answer" id="ref_answer"></p>
     </section>
 
     <footer>
@@ -684,8 +662,8 @@
       </div>
       <div class="modal-body">
         <p>
-          Ориентир про <strong>ширину оценки</strong> (±5&nbsp;п.&nbsp;п., покрытие 95%): когда оценку уже считают относительно узкой.
-          Это не ответ «менеджер хороший / плохой» и&nbsp;не замена расчёту с&nbsp;ожидаемой и&nbsp;плановой C2.
+          Ориентир про <strong>ширину оценки</strong> (±5&nbsp;п.&nbsp;п., покрытие 95%): когда цифру факта уже считают узкой.
+          Справляется ли менеджер и&nbsp;оставлять ли лидген&nbsp;— в&nbsp;расчёте с&nbsp;ожидаемой и&nbsp;плановой C2; для этого узкая цифра не нужна.
         </p>
 
         <h3>По числу заявок (грубо)</h3>
@@ -730,8 +708,8 @@
         </table>
 
         <p class="guide-note">
-          Подтвердить минимум плановой C2 или отсечь ожидаемую C2&nbsp;— другие пороги по числу заявок.
-          Для введённых фактической, ожидаемой и&nbsp;плановой C2 используйте расчёт на странице.
+          Подтвердить минимум плановой C2 или отсечь ожидаемую C2&nbsp;— другие пороги по числу заявок; их даёт расчёт на странице в блоках ожидаемой и&nbsp;плановой.
+          Блок «Когда оценка факта станет узкой» после расчёта отвечает только про ширину оценки (±5&nbsp;п.&nbsp;п.).
           При 0% или 100% полуширина Уилсона&nbsp;— не «± точность»; смотрите край интервала.
         </p>
       </div>
@@ -740,7 +718,7 @@
 
   <script>
     const Z = { 0.90: 1.6448536269514722, 0.95: 1.959963984540054, 0.99: 2.5758293035489004 };
-    /** Порог «оценка уже относительно узкая»: полуширина Уилсона ≤ ±5 п. п. */
+    /** Порог «оценка уже узкая»: полуширина Уилсона ≤ ±5 п. п. */
     const PREC_PP = 5;
 
     const el = (id) => document.getElementById(id);
@@ -1067,49 +1045,49 @@
       if (k === 0) {
         items.push({
           tone: "neutral",
-          text: `Верхняя граница ${hiTxt}%. Выше\u00A0— не согласуется с нулём продаж. Оценку 0% не читайте как «узкую до ±${precTxt} п.\u00A0п.»: у нуля важна верхняя граница, не полуширина.`,
+          text: `Верхняя граница ${hiTxt}%. Уровни выше уже плохо согласуются с нулём продаж. Оценку 0% не читайте как узкую до ±${precTxt} п.\u00A0п.: при нуле продаж важна верхняя граница, а не полуширина.`,
         });
       } else if (k === n) {
         items.push({
           tone: "neutral",
-          text: `Нижняя граница ${loTxt}%. Ниже\u00A0— не согласуется со всеми продажами. Оценку 100% не читайте как «узкую до ±${precTxt} п.\u00A0п.»: у края важна нижняя граница, не полуширина.`,
+          text: `Нижняя граница ${loTxt}%. Уровни ниже уже плохо согласуются со всеми продажами. Оценку 100% не читайте как узкую до ±${precTxt} п.\u00A0п.: у края важна нижняя граница, а не полуширина.`,
         });
       } else if (preciseEnough) {
         items.push({
           tone: "neutral",
-          text: `Интервал ${rangeTxt}, ±${halfTxt} п.\u00A0п.\u00A0— оценка уже относительно узкая (порог ±${precTxt} п.\u00A0п.). Справляется ли менеджер\u00A0— по ожидаемой и плановой C2 ниже, не по ширине.`,
+          text: `Интервал ${rangeTxt}, полуширина ±${halfTxt} п.\u00A0п.: оценка уже узкая (порог ±${precTxt} п.\u00A0п.). Это про то, насколько цифра факта уже сжалась. Справляется ли менеджер и оставлять ли лидген\u00A0— в блоках ожидаемой и плановой C2 ниже.`,
         });
       } else {
         items.push({
           tone: "neutral",
-          text: `Интервал ${rangeTxt}, ±${halfTxt} п.\u00A0п. На цифру ${factTxt}% как на узкую (±${precTxt} п.\u00A0п.) опираться рано. Решение про лидген\u00A0— по ожидаемой и плановой C2 ниже, не дожидаясь узкой оценки.`,
+          text: `Интервал ${rangeTxt}, полуширина ±${halfTxt} п.\u00A0п. До порога ±${precTxt} п.\u00A0п. оценка ещё широкая: ${factTxt}% пока рано считать узкой цифрой. Справляется ли менеджер и оставлять ли лидген, можно смотреть уже сейчас в блоках ожидаемой и плановой C2 ниже\u00A0— ждать узкой оценки для этого не нужно.`,
         });
       }
 
       function pushExpected(pRef, refTxt) {
         const zg = k === 0 && pRef > 0 ? zerosGap(n, pRef, z) : null;
         const s = surpriseVsRate(n, k, pRef);
-        const chance = `При ожидаемой C2 ${refTxt}% получить ${s.how}: ${s.probTxt} (${s.per100txt}).`;
+        const chance = `Если ожидаемая C2 ${refTxt}% верна, получить ${s.how}: ${s.probTxt} (${s.per100txt}).`;
         const outside = pRef < ci.lo - 1e-15 || pRef > ci.hi + 1e-15;
         const isAnomaly = s.side !== "exact" && outside;
 
         if (isAnomaly && s.side === "up") {
           items.push({
             tone: "ok",
-            text: `Аномалия вверх относительно ожидаемой C2 ${refTxt}%. Ожидаемая C2 вне полосы\u00A0— типичный уровень с фактом плохо совместим. ${chance}`,
+            text: `Аномалия вверх: ожидаемая C2 ${refTxt}% вне полосы. Факт выше типичного уровня направления, и этот уровень этими заявками уже плохо объясняется. Это не вердикт о человеке. ${chance} Как редко бывает такой факт\u00A0— подсказка, не решение.`,
           });
           return;
         }
         if (isAnomaly && s.side === "down") {
-          let text = `Аномалия вниз относительно ожидаемой C2 ${refTxt}%. Ожидаемая C2 вне полосы\u00A0— типичный уровень с фактом плохо совместим. ${chance}`;
-          if (k === 0) text += ` Нуля продаж на ${n} заявках уже хватило.`;
+          let text = `Аномалия вниз: ожидаемая C2 ${refTxt}% вне полосы. Факт ниже типичного уровня направления, и этот уровень этими заявками уже плохо объясняется. Это не вердикт о человеке. ${chance} Как редко бывает такой факт\u00A0— подсказка, не решение.`;
+          if (k === 0) text += ` Нуля продаж на ${n} заявках уже хватило, чтобы отсечь этот уровень.`;
           items.push({ tone: "warn", text });
           return;
         }
 
-        let text = `Ожидаемая C2 ${refTxt}% ещё может объяснять факт. ${chance}`;
+        let text = `Ожидаемая C2 ${refTxt}% ещё может объяснять факт: типичный уровень лежит внутри полосы. ${chance}`;
         if (zg && zg.gap > 0) {
-          text += ` Чтобы отсечь ожидаемую C2 при нуле продаж, нужно ещё ${zg.gap} ${ruN(zg.gap, "заявку", "заявки", "заявок")} без продаж\u00A0— всего ${zg.need}.`;
+          text += ` Чтобы при нуле продаж верх полосы опустился ниже ожидаемой C2 ${refTxt}%, нужно ещё ${zg.gap} ${ruN(zg.gap, "заявку", "заявки", "заявок")} без продаж (всего ${zg.need}).`;
         }
         items.push({ tone: "neutral", text });
       }
@@ -1120,27 +1098,27 @@
         if (pRef < ci.lo) {
           items.push({
             tone: "ok",
-            text: `Плановая C2 ${refTxt}% этими данными подтверждена: уровни ниже ${refTxt}% плохо совместимы с фактом (сейчас ${rangeTxt}).`,
+            text: `Плановая C2 ${refTxt}% подтверждена: вся полоса уже выше минимума (сейчас ${rangeTxt}). Уровни ниже ${refTxt}% с фактом плохо совместимы. Подтверждение здесь про всю полосу, не про то, что факт совпал с ${refTxt}%.`,
           });
           return;
         }
         if (pRef > ci.hi) {
-          let text = `Плановая C2 ${refTxt}% этими данными не подтверждается: даже верх диапазона (${hiTxt}%) ниже минимума.`;
+          let text = `Плановая C2 ${refTxt}% не подтверждается: даже верх полосы (${hiTxt}%) ниже минимума. Этими заявками уровни ${refTxt}% и выше уже плохо объясняются.`;
           if (k === 0) text += ` Нуля продаж на ${n} заявках для этого уже достаточно.`;
           items.push({ tone: "warn", text });
           return;
         }
 
-        let text = `Пока рано решать по плановой C2 ${refTxt}%: данные допускают и результат ниже минимума (${rangeTxt}).`;
+        let text = `По плановой C2 ${refTxt}% судить рано: часть полосы ещё ниже минимума (сейчас ${rangeTxt}). Минимум этими заявками пока не подтверждён и не опровергнут.`;
         const need = nToClearFloor(pHat, pRef, z);
         if (need !== null) {
           const gap = Math.max(0, need - n);
           if (gap > 0) {
-            text += ` Если фактическая C2 около ${factTxt}% удержится, чтобы подтвердить минимум, нужно примерно ${need} заявок (ещё ${gap}).`;
+            text += ` Если уровень удержится около ${factTxt}%, чтобы вся полоса поднялась выше минимума, нужно примерно ${need} ${ruN(need, "заявка", "заявки", "заявок")} (ещё ${gap} ${ruN(gap, "заявку", "заявки", "заявок")}).`;
           }
         }
         if (zg && zg.gap > 0) {
-          text += ` Чтобы при нуле продаж отсечь плановую C2 ${refTxt}%, нужно ещё ${zg.gap} ${ruN(zg.gap, "заявку", "заявки", "заявок")} без продаж (всего ${zg.need}).`;
+          text += ` Чтобы при нуле продаж верх полосы опустился ниже плановой C2 ${refTxt}%, нужно ещё ${zg.gap} ${ruN(zg.gap, "заявку", "заявки", "заявок")} без продаж (всего ${zg.need}).`;
         }
         items.push({ tone: "neutral", text });
       }
@@ -1148,7 +1126,7 @@
       if (pExp !== null) pushExpected(pExp, expTxt);
       if (pPlan !== null) pushPlan(pPlan, planTxt);
 
-      renderRefTable(n, z, e, pExp, pPlan, pHat, expTxt, planTxt, factTxt, precPp);
+      renderRefTable(n, z, e, pHat, factTxt, precPp);
 
       el("readout").innerHTML = items
         .map((it) => `<li class="tone-${it.tone}">${it.text}</li>`)
@@ -1156,49 +1134,32 @@
       out.hidden = false;
     }
 
-    function renderRefTable(n, z, e, pExp, pPlan, pHat, expTxt, planTxt, factTxt, precPp) {
+    function renderRefTable(n, z, e, pHat, factTxt, precPp) {
       const coverTxt = String(Math.round(level * 100));
       const precTxt = fmtPct(e, precPp % 1 ? 1 : 0);
       const atEdge = pHat <= 1e-15 || pHat >= 1 - 1e-15;
-      let kicker =
-        `Сколько заявок нужно, чтобы интервал был уже ±${precTxt} п.\u00A0п. (покрытие ${coverTxt}%). Это про ширину оценки. Справляется ли менеджер и оставлять ли лидген\u00A0— по ожидаемой и плановой C2 выше.`;
+
+      el("ref_kicker").textContent =
+        `Узкая оценка: полуширина интервала не больше ±${precTxt} п.\u00A0п. при покрытии ${coverTxt}%. Расчёт ниже предполагает, что долгосрочный уровень останется около текущего факта. Справляется ли менеджер и оставлять ли лидген\u00A0— в блоках ожидаемой и плановой C2 выше; этот блок только про ширину цифры.`;
+
       if (atEdge) {
-        kicker += " При нуле или 100% продаж строка «факт» не строится: полуширина там не означает «± точность».";
-      }
-      el("ref_kicker").textContent = kicker;
-
-      const rows = [];
-      const seen = new Set();
-      const add = (label, p, txt) => {
-        if (p <= 1e-15 || p >= 1 - 1e-15) return;
-        const key = txt;
-        if (seen.has(key)) return;
-        seen.add(key);
-        rows.push({ label, p, txt });
-      };
-      if (pExp !== null) add("Ожидаемая C2", pExp, expTxt);
-      if (pPlan !== null) add("Плановая C2", pPlan, planTxt);
-      add("Факт C2", pHat, factTxt);
-
-      if (rows.length === 0) {
-        el("ref_body").innerHTML = `<tr><td colspan="3">Для нуля или 100% продаж таблица ± не применяется\u00A0— смотрите край интервала выше.</td></tr>`;
+        el("ref_answer").innerHTML =
+          `При 0% и 100% продаж полуширина ±${precTxt} п.\u00A0п. не подходит: смотрите край полосы в расчёте выше. Там важна верхняя или нижняя граница\u00A0— какие уровни ещё не отсечены.`;
         reftable.hidden = false;
         return;
       }
 
-      el("ref_body").innerHTML = rows.map((row) => {
-        const need = nForPrecision(row.p, e, z);
-        const gap = Math.max(0, need - n);
-        const ok = gap === 0;
-        const status = ok
-          ? `<span class="ref-ok">${n}\u00A0— хватает</span>`
-          : `<span class="ref-warn">${n}\u00A0— мало, ещё ${gap}</span>`;
-        return `<tr>
-          <td>${row.label} ${row.txt}%</td>
-          <td>${need}</td>
-          <td>${status}</td>
-        </tr>`;
-      }).join("");
+      const need = nForPrecision(pHat, e, z);
+      const gap = Math.max(0, need - n);
+      const needWord = ruN(need, "заявка", "заявки", "заявок");
+      const gapWord = ruN(gap, "заявки", "заявки", "заявок");
+      if (gap === 0) {
+        el("ref_answer").innerHTML =
+          `При уровне около <strong>${factTxt}%</strong> оценка уже узкая: при ваших <strong>${n}</strong> заявках полуширина не больше ±${precTxt} п.\u00A0п. <span class="ref-ok">Хватает.</span>`;
+      } else {
+        el("ref_answer").innerHTML =
+          `Если уровень удержится около <strong>${factTxt}%</strong>, для узкой оценки нужно примерно <strong>${need}</strong> ${needWord}, сейчас ${n}. <span class="ref-warn">Не хватает ${gap} ${gapWord}.</span>`;
+      }
       reftable.hidden = false;
     }
   </script>
