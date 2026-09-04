@@ -68,20 +68,28 @@
     .grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      gap: 12px 16px;
+      align-items: stretch;
     }
 
-    .grid-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-top: 12px;
+    .coverage {
+      margin-top: 16px;
+      max-width: 28rem;
+    }
+
+    .coverage label {
+      grid-template-rows: auto auto auto;
+    }
+
+    .coverage .note {
+      min-height: 0;
     }
 
     label {
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
       gap: 6px;
+      min-width: 0;
       font-size: 0.82rem;
       color: var(--muted);
     }
@@ -89,12 +97,19 @@
     label strong {
       color: var(--ink);
       font-weight: 600;
+      line-height: 1.3;
     }
 
     label .note {
       font-size: 0.75rem;
       font-weight: 400;
+      line-height: 1.35;
       color: var(--muted);
+      min-height: 2.7em;
+    }
+
+    label .note:empty {
+      visibility: hidden;
     }
 
     input[type="number"] {
@@ -106,6 +121,29 @@
       border-radius: 8px;
       background: #fff;
       width: 100%;
+      min-height: 42px;
+      appearance: textfield;
+      -moz-appearance: textfield;
+    }
+
+    input[type="number"]::placeholder {
+      color: #c4bdb2;
+      opacity: 1;
+    }
+
+    input[type="number"]::-webkit-input-placeholder {
+      color: #c4bdb2;
+    }
+
+    input[type="number"]::-moz-placeholder {
+      color: #c4bdb2;
+      opacity: 1;
+    }
+
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
     }
 
     input[type="number"]:focus {
@@ -116,6 +154,7 @@
     .levels {
       display: flex;
       gap: 6px;
+      min-height: 42px;
     }
 
     .levels button {
@@ -127,6 +166,12 @@
       background: #fff;
       cursor: pointer;
       color: var(--ink);
+      min-height: 42px;
+    }
+
+    .levels button:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
     }
 
     .levels button[aria-pressed="true"] {
@@ -155,6 +200,11 @@
 
     .actions button[type="submit"]:hover {
       filter: brightness(1.08);
+    }
+
+    .actions button[type="submit"]:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
     }
 
     .form-error {
@@ -277,8 +327,16 @@
     }
 
     .legend i.swatch-fact { background: var(--fact-line); }
-    .legend i.swatch-exp { background: var(--expected-line); }
-    .legend i.swatch-plan { background: var(--plan-line); }
+    .legend i.swatch-exp {
+      background: transparent;
+      border-top: 3px dotted var(--expected-line);
+      height: 0;
+    }
+    .legend i.swatch-plan {
+      background: transparent;
+      border-top: 3px dashed var(--plan-line);
+      height: 0;
+    }
 
     .readout {
       margin: 18px 0 0;
@@ -381,6 +439,11 @@
     .btn-ghost:hover {
       border-color: #b8b0a2;
       background: #fff;
+    }
+
+    .btn-ghost:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
     }
 
     .modal {
@@ -487,7 +550,12 @@
     }
 
     @media (max-width: 640px) {
-      .grid, .grid-2 { grid-template-columns: 1fr; }
+      .grid { grid-template-columns: 1fr; }
+      label {
+        grid-template-rows: auto auto auto;
+      }
+      label .note { min-height: 0; }
+      label .note:empty { display: none; }
       .ci b { font-size: 1.8rem; }
     }
   </style>
@@ -496,9 +564,9 @@
   <main>
     <h1>Доверие к конверсии</h1>
     <p class="lede">
-      Калькулятор берёт число заявок и&nbsp;факт конверсии и&nbsp;показывает полосу: внутри&nbsp;— уровни, которые ещё не противоречат накопленным данным, снаружи такими уровнями факт уже плохо объясняется.
-      Ожидаемую конверсию стоит ввести, чтобы сравнить факт с&nbsp;типичным уровнем направления. Плановую конверсию&nbsp;— чтобы проверить, подтверждается ли плановый минимум этими заявками или судить пока рано. «Ожидаемую» и&nbsp;«Плановую» заполнять не обязательно.
-      Введите заявки и&nbsp;факт и&nbsp;нажмите «Рассчитать».
+      Калькулятор берёт число заявок и&nbsp;фактическую C2 и&nbsp;показывает полосу: внутри&nbsp;— уровни, которые ещё не противоречат накопленным данным, снаружи такими уровнями факт уже плохо объясняется.
+      Ожидаемую C2 стоит ввести, чтобы сравнить факт с&nbsp;типичным уровнем направления. Плановую C2&nbsp;— чтобы проверить, подтверждается ли плановый минимум этими заявками или судить пока рано. Ожидаемую и&nbsp;плановую C2 заполнять не обязательно.
+      Введите заявки и&nbsp;факт C2 и&nbsp;нажмите «Рассчитать».
     </p>
     <p class="lede-actions">
       <button type="button" class="btn-ghost" id="guide_open">Когда данных хватает</button>
@@ -508,42 +576,38 @@
       <div class="grid">
         <label>
           <strong>Заявки, шт.</strong>
+          <span class="note"></span>
           <input id="n" type="number" min="1" step="1" inputmode="numeric" placeholder="35" />
         </label>
         <label>
-          <strong>Факт, %</strong>
-          <span class="note">конверсия менеджера в&nbsp;этой выборке</span>
+          <strong>Факт C2, %</strong>
+          <span class="note">конверсия менеджера в&nbsp;этой выборке. C2&nbsp;— конверсия в&nbsp;продажу</span>
           <input id="p_obs" type="number" min="0" max="100" step="0.1" inputmode="decimal" placeholder="0" />
         </label>
         <label>
-          <strong>Ожидаемая, %</strong>
-          <span class="note">средний уровень менеджеров по направлению / продукту</span>
+          <strong>Ожидаемая C2, %</strong>
+          <span class="note">средний уровень по направлению / продукту</span>
           <input id="p_exp" type="number" min="0" max="100" step="0.1" inputmode="decimal" placeholder="12" />
         </label>
         <label>
-          <strong>Плановая, %</strong>
-          <span class="note">минимум по продукту: доля не ниже этого порога</span>
+          <strong>Плановая C2, %</strong>
+          <span class="note">минимум по продукту: не ниже этого порога</span>
           <input id="p_plan" type="number" min="0" max="100" step="0.1" inputmode="decimal" placeholder="20" />
         </label>
       </div>
-      <div class="grid-2">
+      <div class="coverage">
         <label>
           <strong>Покрытие интервала</strong>
-          <span class="note">свойство метода (не «вероятность 95% для этого менеджера»)</span>
+          <span class="note">свойство метода, не вероятность для этого менеджера</span>
           <div class="levels" role="group" aria-label="Покрытие интервала">
             <button type="button" data-level="0.90">90%</button>
             <button type="button" data-level="0.95" aria-pressed="true">95%</button>
             <button type="button" data-level="0.99">99%</button>
           </div>
         </label>
-        <label>
-          <strong>Справочник: точность ±, п.&nbsp;п.</strong>
-          <span class="note">размах, при котором оценку уже считают относительно узкой</span>
-          <input id="precision" type="number" min="1" max="40" step="0.5" value="5" />
-        </label>
       </div>
       <p class="hint">
-        Плановая подтверждена, когда вся полоса уже выше минимума; не выполняется, когда даже верх ниже.
+        Справляется ли менеджер и&nbsp;оставлять ли лидген&nbsp;— смотрите блоки ожидаемой и&nbsp;плановой C2 после расчёта, не ширину интервала. Плановая C2 подтверждена, когда вся полоса уже выше минимума; не выполняется, когда даже верх ниже.
       </p>
       <div class="actions">
         <button type="submit">Рассчитать</button>
@@ -569,9 +633,9 @@
       </div>
       <div class="legend">
         <span><i class="swatch-fill"></i>Совместимые уровни</span>
-        <span><i class="swatch-line swatch-fact"></i>Факт</span>
-        <span><i class="swatch-line swatch-exp"></i>Ожидаемая</span>
-        <span><i class="swatch-line swatch-plan"></i>Плановая</span>
+        <span><i class="swatch-line swatch-fact"></i>Факт C2</span>
+        <span><i class="swatch-line swatch-exp"></i>Ожидаемая C2</span>
+        <span><i class="swatch-line swatch-plan"></i>Плановая C2</span>
       </div>
       <ul class="readout" id="readout"></ul>
     </section>
@@ -592,18 +656,18 @@
     </section>
 
     <footer>
-      <p>Интервал Уилсона строится по заявкам и&nbsp;факту.</p>
-      <p>Ожидаемая совместима с&nbsp;фактом, если лежит внутри интервала. «Аномалия» ставится, только когда ожидаемая вне полосы; хвост бинома лишь показывает, как редко такое бывает.</p>
-      <p>Плановая&nbsp;— минимум «не ниже»: смотрим, остались ли совместимые уровни ниже минимума, все они уже выше или все уже ниже.</p>
+      <p>Интервал Уилсона строится по заявкам и&nbsp;факту C2.</p>
+      <p>Ожидаемая C2 совместима с&nbsp;фактом, если лежит внутри полосы. «Аномалия» появляется, только когда ожидаемая C2 вне полосы. Как редко такой факт бывает при этом уровне&nbsp;— подсказка, не вердикт.</p>
+      <p>Плановая C2: минимум «не ниже». Смотрим, осталась ли часть полосы ниже минимума, вся полоса уже выше или вся уже ниже.</p>
       <details>
         <summary>Подробнее</summary>
         <ol>
           <li>Считаем долю, не среднее. «Школьная» формула на 10–50 заявках заужает диапазон.</li>
           <li>Уилсон не вылезает за 0–100% и&nbsp;не схлопывается при нуле продаж.</li>
           <li>При нуле или 100% продаж не читайте «±»: важна верхняя или нижняя граница, какие уровни ещё не отсечены.</li>
-          <li>Ожидаемая&nbsp;— двусторонняя совместимость с&nbsp;типичным уровнем.</li>
-          <li>Плановая&nbsp;— порог «не ниже». Зелёный, когда нижняя граница уже выше минимума, а не когда факт «попал в&nbsp;12%». Подтверждение минимума по низу двустороннего интервала намеренно строже одностороннего 5%.</li>
-          <li>Ожидаемую (среднее направления) считаем заданной. Если она сама с&nbsp;малой выборки&nbsp;— не используйте «аномалию» как вердикт.</li>
+          <li>Ожидаемая C2&nbsp;— двусторонняя совместимость с&nbsp;типичным уровнем.</li>
+          <li>Плановая C2&nbsp;— порог «не ниже». Зелёный, когда нижняя граница уже выше минимума, а не когда факт «попал в&nbsp;12%». Подтверждение минимума по низу двустороннего интервала намеренно строже одностороннего 5%.</li>
+          <li>Ожидаемую C2 (среднее направления) считаем заданной. Если она сама с&nbsp;малой выборки&nbsp;— не используйте «аномалию» как вердикт.</li>
           <li>Снимок на фиксированном n, не правило остановки: не пересчитывайте каждую неделю до первой «аномалии».</li>
           <li>Не для массового скрининга всех менеджеров с&nbsp;одним порогом: в&nbsp;команде из 20 человек «аномалия» в&nbsp;среднем появится и&nbsp;при норме.</li>
         </ol>
@@ -621,7 +685,7 @@
       <div class="modal-body">
         <p>
           Ориентир про <strong>ширину оценки</strong> (±5&nbsp;п.&nbsp;п., покрытие 95%): когда оценку уже считают относительно узкой.
-          Это не ответ «менеджер хороший / плохой» и&nbsp;не замена расчёту с&nbsp;ожидаемой и&nbsp;плановой.
+          Это не ответ «менеджер хороший / плохой» и&nbsp;не замена расчёту с&nbsp;ожидаемой и&nbsp;плановой C2.
         </p>
 
         <h3>По числу заявок (грубо)</h3>
@@ -639,7 +703,7 @@
             </tr>
             <tr>
               <td>11–40</td>
-              <td>Чаще всего ещё рано для узкой цифры при типичных 5–20%. Уже видно, ожидаемая и&nbsp;плановая внутри полосы или снаружи.</td>
+              <td>Чаще всего ещё рано для узкой цифры при типичных 5–20%. Уже видно, ожидаемая и&nbsp;плановая C2 внутри полосы или снаружи.</td>
             </tr>
             <tr>
               <td>41–100</td>
@@ -666,8 +730,8 @@
         </table>
 
         <p class="guide-note">
-          Подтвердить минимум плановой или отсечь ожидаемую&nbsp;— другие пороги по числу заявок.
-          Для введённых факта, ожидаемой и&nbsp;плановой используйте расчёт на странице.
+          Подтвердить минимум плановой C2 или отсечь ожидаемую C2&nbsp;— другие пороги по числу заявок.
+          Для введённых фактической, ожидаемой и&nbsp;плановой C2 используйте расчёт на странице.
           При 0% или 100% полуширина Уилсона&nbsp;— не «± точность»; смотрите край интервала.
         </p>
       </div>
@@ -676,13 +740,14 @@
 
   <script>
     const Z = { 0.90: 1.6448536269514722, 0.95: 1.959963984540054, 0.99: 2.5758293035489004 };
+    /** Порог «оценка уже относительно узкая»: полуширина Уилсона ≤ ±5 п. п. */
+    const PREC_PP = 5;
 
     const el = (id) => document.getElementById(id);
     const nInput = el("n");
     const pObsInput = el("p_obs");
     const pExpInput = el("p_exp");
     const pPlanInput = el("p_plan");
-    const precisionInput = el("precision");
     const out = el("out");
     const reftable = el("reftable");
     const formError = el("form_error");
@@ -711,7 +776,7 @@
     function fillGuidePrecision() {
       if (guideFilled) return;
       const z = Z[0.95];
-      const e = 0.05;
+      const e = PREC_PP / 100;
       const rates = [0.05, 0.1, 0.15, 0.2, 0.3, 0.5];
       el("guide_precision_body").innerHTML = rates.map((p) => {
         const need = nForPrecision(p, e, z);
@@ -719,7 +784,7 @@
         return `<tr>
           <td>${pct}%</td>
           <td>${need}</td>
-          <td>оценке как узкой (±5&nbsp;п.&nbsp;п.) доверять рано</td>
+          <td>оценке как узкой (±${PREC_PP}&nbsp;п.&nbsp;п.) доверять рано</td>
         </tr>`;
       }).join("");
       guideFilled = true;
@@ -959,7 +1024,7 @@
         out.hidden = true;
         reftable.hidden = true;
         formError.hidden = false;
-        formError.textContent = "Введите заявки и факт конверсии.";
+        formError.textContent = "Введите заявки и факт C2.";
         return;
       }
 
@@ -975,10 +1040,9 @@
       const loTxt = fmtPct(ci.lo);
       const hiTxt = fmtPct(ci.hi);
       const rangeTxt = `${loTxt}%–${hiTxt}%`;
-      const precPp = parseNum(precisionInput);
-      const precOk = precPp !== null && precPp > 0;
-      const e = precOk ? precPp / 100 : null;
-      const precTxt = precOk ? fmtPct(e, precPp % 1 ? 1 : 0) : "";
+      const precPp = PREC_PP;
+      const e = precPp / 100;
+      const precTxt = fmtPct(e, 0);
 
       el("ci_lo").textContent = fmtPct(ci.lo) + "%";
       el("ci_hi").textContent = fmtPct(ci.hi) + "%";
@@ -998,61 +1062,54 @@
       const widthPp = (ci.hi - ci.lo) * 100;
       const halfPp = widthPp / 2;
       const halfTxt = fmtPct(halfPp / 100, halfPp >= 10 ? 0 : 1);
-      const preciseEnough = precOk && halfPp <= precPp + 1e-9;
+      const preciseEnough = halfPp <= precPp + 1e-9;
 
       if (k === 0) {
-        let text = `Верхняя граница ${hiTxt}%. Выше\u00A0— не согласуется с нулём продаж.`;
-        text += precOk
-          ? ` Оценку 0% не читайте как «узкую до ±${precTxt} п.\u00A0п.»: у нуля важна верхняя граница, не полуширина.`
-          : ` Оценку 0% не читайте как узкую цифру: у нуля важна верхняя граница, не полуширина.`;
-        items.push({ tone: "neutral", text });
-      } else if (k === n) {
-        let text = `Нижняя граница ${loTxt}%. Ниже\u00A0— не согласуется со всеми продажами.`;
-        text += precOk
-          ? ` Оценку 100% не читайте как «узкую до ±${precTxt} п.\u00A0п.»: у края важна нижняя граница, не полуширина.`
-          : ` Оценку 100% не читайте как узкую цифру: у края важна нижняя граница, не полуширина.`;
-        items.push({ tone: "neutral", text });
-      } else if (!precOk) {
         items.push({
           tone: "neutral",
-          text: `Интервал ${rangeTxt}, ±${halfTxt} п.\u00A0п.`,
+          text: `Верхняя граница ${hiTxt}%. Выше\u00A0— не согласуется с нулём продаж. Оценку 0% не читайте как «узкую до ±${precTxt} п.\u00A0п.»: у нуля важна верхняя граница, не полуширина.`,
+        });
+      } else if (k === n) {
+        items.push({
+          tone: "neutral",
+          text: `Нижняя граница ${loTxt}%. Ниже\u00A0— не согласуется со всеми продажами. Оценку 100% не читайте как «узкую до ±${precTxt} п.\u00A0п.»: у края важна нижняя граница, не полуширина.`,
         });
       } else if (preciseEnough) {
         items.push({
           tone: "neutral",
-          text: `Интервал ${rangeTxt}, ±${halfTxt} п.\u00A0п.\u00A0— оценка уже относительно узкая (порог ±${precTxt} п.\u00A0п.). На «хороший / плохой» это само по себе не отвечает.`,
+          text: `Интервал ${rangeTxt}, ±${halfTxt} п.\u00A0п.\u00A0— оценка уже относительно узкая (порог ±${precTxt} п.\u00A0п.). Справляется ли менеджер\u00A0— по ожидаемой и плановой C2 ниже, не по ширине.`,
         });
       } else {
         items.push({
           tone: "neutral",
-          text: `Интервал ${rangeTxt}, ±${halfTxt} п.\u00A0п. На цифру ${factTxt}% как на узкую пока опираться рано (порог ±${precTxt} п.\u00A0п.).`,
+          text: `Интервал ${rangeTxt}, ±${halfTxt} п.\u00A0п. На цифру ${factTxt}% как на узкую (±${precTxt} п.\u00A0п.) опираться рано. Решение про лидген\u00A0— по ожидаемой и плановой C2 ниже, не дожидаясь узкой оценки.`,
         });
       }
 
       function pushExpected(pRef, refTxt) {
         const zg = k === 0 && pRef > 0 ? zerosGap(n, pRef, z) : null;
         const s = surpriseVsRate(n, k, pRef);
-        const chance = `При среднем ${refTxt}% получить ${s.how}: ${s.probTxt} (${s.per100txt}).`;
+        const chance = `При ожидаемой C2 ${refTxt}% получить ${s.how}: ${s.probTxt} (${s.per100txt}).`;
         const outside = pRef < ci.lo - 1e-15 || pRef > ci.hi + 1e-15;
         const isAnomaly = s.side !== "exact" && outside;
 
         if (isAnomaly && s.side === "up") {
           items.push({
             tone: "ok",
-            text: `Аномалия вверх относительно ожидаемой ${refTxt}%. Ожидаемая вне интервала\u00A0— типичный уровень с фактом плохо совместим. ${chance}`,
+            text: `Аномалия вверх относительно ожидаемой C2 ${refTxt}%. Ожидаемая C2 вне полосы\u00A0— типичный уровень с фактом плохо совместим. ${chance}`,
           });
           return;
         }
         if (isAnomaly && s.side === "down") {
-          let text = `Аномалия вниз относительно ожидаемой ${refTxt}%. Ожидаемая вне интервала\u00A0— типичный уровень с фактом плохо совместим. ${chance}`;
+          let text = `Аномалия вниз относительно ожидаемой C2 ${refTxt}%. Ожидаемая C2 вне полосы\u00A0— типичный уровень с фактом плохо совместим. ${chance}`;
           if (k === 0) text += ` Нуля продаж на ${n} заявках уже хватило.`;
           items.push({ tone: "warn", text });
           return;
         }
 
-        let text = `Ожидаемая ${refTxt}% ещё может объяснять факт. ${chance}`;
+        let text = `Ожидаемая C2 ${refTxt}% ещё может объяснять факт. ${chance}`;
         if (zg && zg.gap > 0) {
-          text += ` Чтобы отсечь ожидаемую при нуле продаж, нужно ещё ${zg.gap} ${ruN(zg.gap, "заявку", "заявки", "заявок")} без продаж\u00A0— всего ${zg.need}.`;
+          text += ` Чтобы отсечь ожидаемую C2 при нуле продаж, нужно ещё ${zg.gap} ${ruN(zg.gap, "заявку", "заявки", "заявок")} без продаж\u00A0— всего ${zg.need}.`;
         }
         items.push({ tone: "neutral", text });
       }
@@ -1063,27 +1120,27 @@
         if (pRef < ci.lo) {
           items.push({
             tone: "ok",
-            text: `Плановая ${refTxt}% этими данными подтверждена: уровни ниже ${refTxt}% плохо совместимы с фактом (сейчас ${rangeTxt}).`,
+            text: `Плановая C2 ${refTxt}% этими данными подтверждена: уровни ниже ${refTxt}% плохо совместимы с фактом (сейчас ${rangeTxt}).`,
           });
           return;
         }
         if (pRef > ci.hi) {
-          let text = `Плановая ${refTxt}% этими данными не подтверждается: даже верх диапазона (${hiTxt}%) ниже минимума.`;
+          let text = `Плановая C2 ${refTxt}% этими данными не подтверждается: даже верх диапазона (${hiTxt}%) ниже минимума.`;
           if (k === 0) text += ` Нуля продаж на ${n} заявках для этого уже достаточно.`;
           items.push({ tone: "warn", text });
           return;
         }
 
-        let text = `Пока рано решать по плановой ${refTxt}%: данные допускают и результат ниже минимума (${rangeTxt}).`;
+        let text = `Пока рано решать по плановой C2 ${refTxt}%: данные допускают и результат ниже минимума (${rangeTxt}).`;
         const need = nToClearFloor(pHat, pRef, z);
         if (need !== null) {
           const gap = Math.max(0, need - n);
           if (gap > 0) {
-            text += ` Если конверсия около ${factTxt}% удержится, чтобы подтвердить минимум, нужно примерно ${need} заявок (ещё ${gap}).`;
+            text += ` Если фактическая C2 около ${factTxt}% удержится, чтобы подтвердить минимум, нужно примерно ${need} заявок (ещё ${gap}).`;
           }
         }
         if (zg && zg.gap > 0) {
-          text += ` Чтобы при нуле продаж отсечь плановую ${refTxt}%, нужно ещё ${zg.gap} ${ruN(zg.gap, "заявку", "заявки", "заявок")} без продаж (всего ${zg.need}).`;
+          text += ` Чтобы при нуле продаж отсечь плановую C2 ${refTxt}%, нужно ещё ${zg.gap} ${ruN(zg.gap, "заявку", "заявки", "заявок")} без продаж (всего ${zg.need}).`;
         }
         items.push({ tone: "neutral", text });
       }
@@ -1091,7 +1148,7 @@
       if (pExp !== null) pushExpected(pExp, expTxt);
       if (pPlan !== null) pushPlan(pPlan, planTxt);
 
-      renderRefTable(n, z, e, pExp, pPlan, pHat, expTxt, planTxt, factTxt, precOk, precPp);
+      renderRefTable(n, z, e, pExp, pPlan, pHat, expTxt, planTxt, factTxt, precPp);
 
       el("readout").innerHTML = items
         .map((it) => `<li class="tone-${it.tone}">${it.text}</li>`)
@@ -1099,17 +1156,12 @@
       out.hidden = false;
     }
 
-    function renderRefTable(n, z, e, pExp, pPlan, pHat, expTxt, planTxt, factTxt, precOk, precPp) {
-      if (!precOk) {
-        reftable.hidden = true;
-        return;
-      }
-
+    function renderRefTable(n, z, e, pExp, pPlan, pHat, expTxt, planTxt, factTxt, precPp) {
       const coverTxt = String(Math.round(level * 100));
       const precTxt = fmtPct(e, precPp % 1 ? 1 : 0);
       const atEdge = pHat <= 1e-15 || pHat >= 1 - 1e-15;
       let kicker =
-        `Сколько заявок нужно, чтобы интервал был уже ±${precTxt} п.\u00A0п. (покрытие ${coverTxt}%). Это про ширину оценки, не про «хороший» или «плохой» результат.`;
+        `Сколько заявок нужно, чтобы интервал был уже ±${precTxt} п.\u00A0п. (покрытие ${coverTxt}%). Это про ширину оценки. Справляется ли менеджер и оставлять ли лидген\u00A0— по ожидаемой и плановой C2 выше.`;
       if (atEdge) {
         kicker += " При нуле или 100% продаж строка «факт» не строится: полуширина там не означает «± точность».";
       }
@@ -1124,9 +1176,9 @@
         seen.add(key);
         rows.push({ label, p, txt });
       };
-      if (pExp !== null) add("Ожидаемая", pExp, expTxt);
-      if (pPlan !== null) add("Плановая", pPlan, planTxt);
-      add("Факт", pHat, factTxt);
+      if (pExp !== null) add("Ожидаемая C2", pExp, expTxt);
+      if (pPlan !== null) add("Плановая C2", pPlan, planTxt);
+      add("Факт C2", pHat, factTxt);
 
       if (rows.length === 0) {
         el("ref_body").innerHTML = `<tr><td colspan="3">Для нуля или 100% продаж таблица ± не применяется\u00A0— смотрите край интервала выше.</td></tr>`;
